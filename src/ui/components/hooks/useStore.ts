@@ -25,6 +25,13 @@ export interface Store {
   setSelectedStatuses: React.Dispatch<React.SetStateAction<SelectedStatuses>>
 }
 
+const fetchWrapper = (url: RequestInfo, args: RequestInit = {}) => {
+  return fetch(url, {
+    credentials: 'include',
+    ...args,
+  });
+}
+
 export const useStore = (basePath: string): Store => {
   const [state, setState] = useState({
     data: null,
@@ -59,12 +66,12 @@ export const useStore = (basePath: string): Store => {
   }
 
   const update = () =>
-    fetch(`${basePath}/queues/?${qs.encode(selectedStatuses)}`)
+    fetchWrapper(`${basePath}/queues/?${qs.encode(selectedStatuses)}`)
       .then(res => (res.ok ? res.json() : Promise.reject(res)))
       .then(data => setState({ data, loading: false }))
 
   const promoteJob = (queueName: string) => (job: AppJob) => () =>
-    fetch(
+    fetchWrapper(
       `${basePath}/queues/${encodeURIComponent(queueName)}/${job.id}/promote`,
       {
         method: 'put',
@@ -72,7 +79,7 @@ export const useStore = (basePath: string): Store => {
     ).then(update)
 
   const retryJob = (queueName: string) => (job: AppJob) => () =>
-    fetch(
+    fetchWrapper(
       `${basePath}/queues/${encodeURIComponent(queueName)}/${job.id}/retry`,
       {
         method: 'put',
@@ -80,22 +87,22 @@ export const useStore = (basePath: string): Store => {
     ).then(update)
 
   const retryAll = (queueName: string) => () =>
-    fetch(`${basePath}/queues/${encodeURIComponent(queueName)}/retry`, {
+    fetchWrapper(`${basePath}/queues/${encodeURIComponent(queueName)}/retry`, {
       method: 'put',
     }).then(update)
 
   const cleanAllDelayed = (queueName: string) => () =>
-    fetch(`${basePath}/queues/${encodeURIComponent(queueName)}/clean/delayed`, {
+    fetchWrapper(`${basePath}/queues/${encodeURIComponent(queueName)}/clean/delayed`, {
       method: 'put',
     }).then(update)
 
   const cleanAllFailed = (queueName: string) => () =>
-    fetch(`${basePath}/queues/${encodeURIComponent(queueName)}/clean/failed`, {
+    fetchWrapper(`${basePath}/queues/${encodeURIComponent(queueName)}/clean/failed`, {
       method: 'put',
     }).then(update)
 
   const cleanAllCompleted = (queueName: string) => () =>
-    fetch(
+    fetchWrapper(
       `${basePath}/queues/${encodeURIComponent(queueName)}/clean/completed`,
       {
         method: 'put',
